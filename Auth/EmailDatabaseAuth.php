@@ -13,6 +13,9 @@ use Kanboard\User\DatabaseUserProvider;
  * Fallback provider that allows authentication using email address
  * when the standard DatabaseAuth (username-based) fails.
  *
+ * Security: On successful email lookup, the real username is stored
+ * so that AuthFailureEvent and brute-force counters work correctly.
+ *
  * @package Kanboard\Plugin\EmailLogin\Auth
  */
 class EmailDatabaseAuth extends Base implements PasswordAuthenticationProviderInterface
@@ -23,6 +26,8 @@ class EmailDatabaseAuth extends Base implements PasswordAuthenticationProviderIn
     protected $userInfo = [];
 
     /**
+     * The input value (could be email)
+     *
      * @var string
      */
     protected $username = '';
@@ -31,6 +36,13 @@ class EmailDatabaseAuth extends Base implements PasswordAuthenticationProviderIn
      * @var string
      */
     protected $password = '';
+
+    /**
+     * The resolved real username (for brute-force tracking)
+     *
+     * @var string
+     */
+    protected $resolvedUsername = '';
 
     /**
      * @return string
@@ -54,7 +66,7 @@ class EmailDatabaseAuth extends Base implements PasswordAuthenticationProviderIn
 
         $user = $this->db
             ->table(UserModel::TABLE)
-            ->columns('id', 'password')
+            ->columns('id', 'username', 'password')
             ->eq('email', $this->username)
             ->eq('disable_login_form', 0)
             ->eq('is_ldap_user', 0)
@@ -63,7 +75,13 @@ class EmailDatabaseAuth extends Base implements PasswordAuthenticationProviderIn
 
         if (!empty($user) && password_verify($this->password, $user['password'])) {
             $this->userInfo = $user;
+            $this->resolvedUsername = $user['username'];
             return true;
+        }
+
+        // Even on failure, resolve the username for brute-force tracking
+        if (!empty($user)) {
+            $this->resolvedUsername = $user['username'];
         }
 
         return false;
@@ -82,11 +100,22 @@ class EmailDatabaseAuth extends Base implements PasswordAuthenticationProviderIn
     }
 
     /**
+     * Get the resolved real username (for external brute-force integration)
+     *
+     * @return string
+     */
+    public function getResolvedUsername()
+    {
+        return $this->resolvedUsername;
+    }
+
+    /**
      * @param string $username
      */
     public function setUsername($username)
     {
         $this->username = $username;
+        $this->resolvedUsername = '';
     }
 
     /**

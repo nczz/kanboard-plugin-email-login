@@ -5,12 +5,13 @@ namespace Kanboard\Plugin\EmailLogin;
 use Kanboard\Core\Plugin\Base;
 use Kanboard\Core\Translator;
 use Kanboard\Plugin\EmailLogin\Auth\EmailDatabaseAuth;
+use Kanboard\Plugin\EmailLogin\Subscriber\EmailAuthSubscriber;
 
 /**
  * EmailLogin Plugin
  *
  * Allows users to log in and reset passwords using either username or email address.
- * Also enforces email uniqueness on user creation/modification.
+ * Enforces email uniqueness and required email on user creation/modification.
  *
  * @author  Knockers Dev Team
  * @license MIT
@@ -22,8 +23,12 @@ class Plugin extends Base
         // Register additional auth provider for email-based login
         $this->authenticationManager->register(new EmailDatabaseAuth($this->container));
 
-        // Override user creation template to mark email as required
+        // Register event subscriber for brute-force protection with email login
+        $this->dispatcher->addSubscriber(new EmailAuthSubscriber($this->container));
+
+        // Override templates to mark email as required
         $this->template->setTemplateOverride('user_creation/show', 'EmailLogin:user_creation/show');
+        $this->template->setTemplateOverride('user_modification/show', 'EmailLogin:user_modification/show');
     }
 
     public function getClasses()
@@ -34,6 +39,7 @@ class Plugin extends Base
             ],
             'Plugin\\EmailLogin\\Validator' => [
                 'UserValidator',
+                'AuthValidator',
             ],
         ];
     }
@@ -60,7 +66,7 @@ class Plugin extends Base
 
     public function getPluginVersion()
     {
-        return '1.0.0';
+        return '1.1.0';
     }
 
     public function getPluginHomepage()

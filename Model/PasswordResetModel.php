@@ -11,6 +11,10 @@ use Kanboard\Model\UserModel;
  * Overrides the core PasswordResetModel to support password reset
  * using either username or email address.
  *
+ * Behavior notes:
+ * - Username path: matches core behavior exactly (requires non-empty email, no is_active check)
+ * - Email path: requires is_active=1 (disabled accounts should not be discoverable by email)
+ *
  * @package Kanboard\Plugin\EmailLogin\Model
  */
 class PasswordResetModel extends BasePasswordResetModel
@@ -26,12 +30,11 @@ class PasswordResetModel extends BasePasswordResetModel
      */
     public function create($username, $expiration = 0)
     {
-        // First try: lookup by username (original behavior)
+        // First try: lookup by username (matches core behavior exactly)
         $user_id = $this->db->table(UserModel::TABLE)
             ->eq('username', $username)
             ->neq('email', '')
             ->notNull('email')
-            ->eq('is_active', 1)
             ->findOneColumn('id');
 
         // Second try: lookup by email if input contains @
