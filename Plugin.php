@@ -3,6 +3,7 @@
 namespace Kanboard\Plugin\EmailLogin;
 
 use Kanboard\Core\Plugin\Base;
+use Kanboard\Core\Translator;
 use Kanboard\Plugin\EmailLogin\Auth\EmailDatabaseAuth;
 
 /**
@@ -35,6 +36,11 @@ class Plugin extends Base
                 'UserValidator',
             ],
         ];
+    }
+
+    public function onStartup()
+    {
+        Translator::load($this->languageModel->getCurrentLanguage(), __DIR__.'/Locale');
     }
 
     public function getPluginName()
