@@ -20,6 +20,9 @@ class Plugin extends Base
     {
         // Register additional auth provider for email-based login
         $this->authenticationManager->register(new EmailDatabaseAuth($this->container));
+
+        // Override user creation template to mark email as required
+        $this->template->setTemplateOverride('user_creation/show', 'EmailLogin:user_creation/show');
     }
 
     public function getClasses()
