@@ -25,10 +25,10 @@ class Plugin extends Base
     public function getClasses()
     {
         return [
-            'Model' => [
+            'Plugin\\EmailLogin\\Model' => [
                 'PasswordResetModel',
             ],
-            'Validator' => [
+            'Plugin\\EmailLogin\\Validator' => [
                 'UserValidator',
             ],
         ];
@@ -56,7 +56,7 @@ class Plugin extends Base
 
     public function getPluginHomepage()
     {
-        return 'https://github.com/mxp-tw/kanboard-plugin-email-login';
+        return 'https://github.com/nczz/kanboard-plugin-email-login';
     }
 
     public function getCompatibleVersion()

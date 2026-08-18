@@ -29,7 +29,7 @@ This plugin uses Kanboard's native extension points — no core files are modifi
 
 ```bash
 cd /path/to/kanboard/plugins
-git clone https://github.com/mxp-tw/kanboard-plugin-email-login.git EmailLogin
+git clone https://github.com/nczz/kanboard-plugin-email-login.git EmailLogin
 ```
 
 The directory **must** be named `EmailLogin` to match the namespace.
