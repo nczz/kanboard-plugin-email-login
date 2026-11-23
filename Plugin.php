@@ -26,7 +26,8 @@ class Plugin extends Base
         // Register event subscriber for brute-force protection with email login
         $this->dispatcher->addSubscriber(new EmailAuthSubscriber($this->container));
 
-        // Override templates to mark email as required
+        // Override forms that require or accept email addresses
+        $this->template->setTemplateOverride('password_reset/create', 'EmailLogin:password_reset/create');
         $this->template->setTemplateOverride('user_creation/show', 'EmailLogin:user_creation/show');
         $this->template->setTemplateOverride('user_modification/show', 'EmailLogin:user_modification/show');
     }
@@ -66,7 +67,7 @@ class Plugin extends Base
 
     public function getPluginVersion()
     {
-        return '1.1.0';
+        return '1.1.1';
     }
 
     public function getPluginHomepage()

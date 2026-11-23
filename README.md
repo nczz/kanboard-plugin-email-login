@@ -21,7 +21,7 @@ This plugin uses Kanboard's native extension points — no core files are modifi
 Registers an additional `PasswordAuthenticationProvider`. The original `DatabaseAuth` runs first (username lookup). If it fails and the input contains `@`, the plugin's `EmailDatabaseAuth` provider tries email-based lookup.
 
 ### Password Reset
-Overrides `PasswordResetModel` via DI container. The `create()` method first tries username lookup (original behavior), then falls back to email lookup.
+Overrides the password reset form and submits it to the plugin controller. The controller resolves the submitted identifier as a username first, then as an active user's email address. It creates the token with the canonical username and sends the message to the same resolved user, so the lookup and recipient cannot diverge.
 
 ### Email Validation
 Overrides `UserValidator` to add:
@@ -33,6 +33,7 @@ Overrides `UserValidator` to add:
 - Registers an `EventSubscriber` on `auth.failure` (priority 10) to correctly increment the brute-force counter for the real username when login fails with an email input
 
 ### Template Overrides
+- `password_reset/create` — accepts username or email and submits to the email-aware controller
 - `user_creation/show` — email field marked `required`
 - `user_modification/show` — email field marked `required`
 
@@ -84,18 +85,24 @@ EmailLogin/
 ├── Plugin.php                          # Plugin entry point
 ├── Auth/
 │   └── EmailDatabaseAuth.php           # Email-based auth provider
+├── Controller/
+│   └── PasswordResetController.php     # Email-aware password reset delivery
 ├── Model/
-│   └── PasswordResetModel.php          # Extended password reset (email fallback)
+│   └── PasswordResetModel.php          # Extended password reset lookup
 ├── Subscriber/
 │   └── EmailAuthSubscriber.php         # Brute-force counter for email login
 ├── Validator/
 │   ├── AuthValidator.php               # Login locking/captcha with email resolution
 │   └── UserValidator.php               # Email required + unique enforcement
 ├── Template/
+│   ├── password_reset/
+│   │   └── create.php                  # Username/email password reset form
 │   ├── user_creation/
 │   │   └── show.php                    # Email required on create form
 │   └── user_modification/
 │       └── show.php                    # Email required on edit form
+├── Test/
+│   └── PasswordResetControllerTest.php # Password reset behavior regression tests
 ├── Locale/
 │   └── zh_TW/
 │       └── translations.php            # Traditional Chinese
