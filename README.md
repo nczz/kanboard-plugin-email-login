@@ -29,8 +29,7 @@ Overrides `UserValidator` to add:
 - `Unique('email')` on all operations (including API)
 
 ### Brute-force Protection
-- Overrides `AuthValidator` to resolve email → username before checking lock/captcha status
-- Registers an `EventSubscriber` on `auth.failure` (priority 10) to correctly increment the brute-force counter for the real username when login fails with an email input
+Overrides `UserLockingModel` so every CAPTCHA, lock, increment, and reset operation resolves an email address to the same canonical username used by authentication. Core Kanboard then renders CAPTCHA and applies lockout counters consistently without duplicate failure-event handling.
 
 ### Template Overrides
 - `password_reset/create` — accepts username or email and submits to the email-aware controller
@@ -88,11 +87,9 @@ EmailLogin/
 ├── Controller/
 │   └── PasswordResetController.php     # Email-aware password reset delivery
 ├── Model/
-│   └── PasswordResetModel.php          # Extended password reset lookup
-├── Subscriber/
-│   └── EmailAuthSubscriber.php         # Brute-force counter for email login
+│   ├── PasswordResetModel.php          # Extended password reset lookup
+│   └── UserLockingModel.php            # Canonical brute-force tracking for email login
 ├── Validator/
-│   ├── AuthValidator.php               # Login locking/captcha with email resolution
 │   └── UserValidator.php               # Email required + unique enforcement
 ├── Template/
 │   ├── password_reset/
@@ -102,7 +99,8 @@ EmailLogin/
 │   └── user_modification/
 │       └── show.php                    # Email required on edit form
 ├── Test/
-│   └── PasswordResetControllerTest.php # Password reset behavior regression tests
+│   ├── PasswordResetControllerTest.php # Password reset behavior regression tests
+│   └── UserLockingModelTest.php         # Email CAPTCHA and lockout regression tests
 ├── Locale/
 │   └── zh_TW/
 │       └── translations.php            # Traditional Chinese
@@ -116,6 +114,14 @@ EmailLogin/
 - **Brute-force**: Email login failures are correctly attributed to the real username for lockout counting
 - **Disabled accounts**: Email-based password reset requires `is_active=1` (prevents probing disabled accounts)
 - **Timing**: The `@` check in EmailDatabaseAuth introduces a minor timing difference, but this only reveals input format (not account existence) and is consistent with Kanboard's core security model
+
+## Changelog
+
+### 1.1.2
+
+- Fix email login deadlock when a canonical username reaches the CAPTCHA threshold.
+- Centralize email-to-username resolution in `UserLockingModel` for CAPTCHA display, lock checks, and failure counters.
+- Preserve username-first authentication precedence and prevent duplicate failed-login increments.
 
 ## License
 
